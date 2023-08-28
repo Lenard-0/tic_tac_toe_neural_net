@@ -18,7 +18,7 @@ pub struct Brain {
 impl Brain {
     pub fn manifest() -> Self {
         let mut neurons = HashMap::new();
-        neurons.insert("000000000".to_string(), Neuron::manifest());
+        neurons.insert("000000000".to_string(), Neuron::manifest(None));
         return Brain { neurons, neurons_used_for_crosses: vec![], neurons_used_for_noughts: vec![] }
     }
 
@@ -41,14 +41,18 @@ impl Brain {
 #[derive(Debug, Clone)]
 pub struct Neuron {
     visit_count: usize,
-    win_count: usize
+    win_count: usize,
+    parent_neuron: Option<String>,
+    children_neurons: Vec<String>
 }
 
 impl Neuron {
-    pub fn manifest() -> Self {
+    pub fn manifest(parent_neuron: Option<String>) -> Self {
         return Neuron {
             visit_count: 0,
-            win_count: 0
+            win_count: 0,
+            parent_neuron,
+            children_neurons: vec![]
         }
     }
 
