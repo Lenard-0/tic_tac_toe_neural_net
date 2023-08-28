@@ -1,8 +1,5 @@
-use crate::game_functionality::{Board, determine_outcome, Outcome};
-
+use crate::game_functionality::Outcome;
 use super::Brain;
-
-
 
 
 pub fn backpropagate(brain: &mut Brain, outcome: Outcome) {
