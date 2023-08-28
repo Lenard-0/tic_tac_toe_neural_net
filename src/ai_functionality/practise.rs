@@ -1,4 +1,4 @@
-use rand::seq::SliceRandom;
+use rand::{seq::SliceRandom, Rng};
 
 use crate::{game_functionality::{get_possible_moves, current_turn_is_crosses, Board, make_move, determine_outcome, Outcome}, game_interface::print_board};
 
@@ -8,10 +8,13 @@ pub fn practise(brain: &mut Brain, neuron_key: &str) -> Outcome {
     let mut board = key_to_pos(neuron_key);
 
     while determine_outcome(&board) == Outcome::Unfinished {
-        print_board(&board);
+        let mut rng = rand::thread_rng();
+        // if rng.gen_range(1..=20) == 1 {
+            // print_board(&board);
+        // }
+
         let possible_moves = get_possible_moves(&board);
         add_any_new_neurons(brain, &board, &possible_moves, neuron_key);
-        let mut rng = rand::thread_rng();
         let current_turn_is_crosses = current_turn_is_crosses(&board);
         if let Some((row, col)) = possible_moves.choose(&mut rng) {
             make_move(&mut board, *row, *col);

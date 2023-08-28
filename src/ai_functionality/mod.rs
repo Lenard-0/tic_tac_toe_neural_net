@@ -1,25 +1,31 @@
 use std::collections::HashMap;
+use std::f64::INFINITY;
 use crate::game_functionality::{Board, get_possible_moves, make_move, Symbol};
-use std::sync::{Arc, RwLock};
-use std::thread;
-use self::{practise::practise, backpropagate::backpropagate, key::position_to_key};
+use self::key::position_to_key;
 
 pub mod key;
 pub mod practise;
 pub mod backpropagate;
+pub mod train;
 
 #[derive(Debug, Clone)]
 pub struct Brain {
     neurons: HashMap<String, Neuron>,
     neurons_used_for_crosses: Vec<String>,
     neurons_used_for_noughts: Vec<String>,
+    exploration_constant: f64
 }
 
 impl Brain {
     pub fn manifest() -> Self {
         let mut neurons = HashMap::new();
         neurons.insert("000000000".to_string(), Neuron::manifest(None));
-        return Brain { neurons, neurons_used_for_crosses: vec![], neurons_used_for_noughts: vec![] }
+        return Brain {
+            neurons,
+            neurons_used_for_crosses: vec![],
+            neurons_used_for_noughts: vec![],
+            exploration_constant: 1.41
+        }
     }
 
     pub fn choose_move(&self, board: &mut Board) {
@@ -57,16 +63,33 @@ impl Neuron {
     }
 
     pub fn get_most_excited(brain: &Brain) -> (Self, String) {
-        let mut least_visited_neuron = brain.neurons.get("000000000").unwrap();
-        let mut least_visited_neuron_key = "000000000";
+        let mut most_curious_nearon = brain.neurons.get("000000000").unwrap();
+        let mut most_curious_nearon_key = "000000000";
         for (neuron_key, neuron) in &brain.neurons {
-            if neuron.visit_count < least_visited_neuron.visit_count {
-                least_visited_neuron = neuron;
-                least_visited_neuron_key = neuron_key;
+            if neuron.upper_confidence_value(brain)
+            > most_curious_nearon.upper_confidence_value(brain) {
+                most_curious_nearon = neuron;
+                most_curious_nearon_key = neuron_key;
             }
         }
 
-        return (least_visited_neuron.clone(), least_visited_neuron_key.to_string())
+        return (most_curious_nearon.clone(), most_curious_nearon_key.to_string())
+    }
+
+    fn upper_confidence_value(&self, brain: &Brain) -> f64 {
+        if self.visit_count == 0 {
+            return INFINITY
+        }
+        // UCT(i) = Q(i) + c * sqrt(ln(N(p)) / N(i))
+        let exploitation_factor = self.win_count as f64 / self.win_count as f64;
+        let parent_visit_count = match &self.parent_neuron {
+            Some(parent) => brain.neurons.get(parent).unwrap().visit_count as f64,
+            None => 1.0
+        };
+        let exploration_factor =
+            brain.exploration_constant * (parent_visit_count.ln() / self.visit_count as f64).sqrt();
+
+        return exploitation_factor + exploration_factor
     }
 
     fn activate_neuron(mut board: Board, m: (usize, usize), brain: &Brain) -> Self {
@@ -83,18 +106,4 @@ impl Neuron {
     fn potential(&self) -> f64 {
         self.win_count as f64 / self.visit_count as f64
     }
-}
-
-pub fn train(mut brain: Brain) -> Brain {
-    // Initialize a thread pool for parallel processing
-
-    for _simulation in 0..10000 {
-        let (_, neuron_key) = Neuron::get_most_excited(&brain); // Use a selection strategy to choose a node to explore
-        let outcome = practise(&mut brain, &neuron_key); // Simulate a random game from the selected node's state
-        backpropagate(&mut brain, outcome); // Update node statistics based on the simulation result
-        brain.neurons_used_for_crosses = vec![];
-        brain.neurons_used_for_noughts = vec![];
-    }
-
-    return brain
 }
