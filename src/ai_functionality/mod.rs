@@ -29,7 +29,7 @@ impl Brain {
         }
     }
 
-    pub fn choose_move(&self, board: &mut Board) {
+    pub fn choose_best_move(&self, board: &mut Board) {
         let possible_moves = get_possible_moves(board);
         let mut best_neuron = Neuron::activate_neuron(board.clone(), possible_moves[0], self);
         let mut best_move = possible_moves[0];
@@ -47,6 +47,26 @@ impl Brain {
         }
 
         board[best_move.0][best_move.1] = Some(Symbol::Nought)
+    }
+
+    fn add_any_new_neurons(
+        &mut self,
+        board: &Board,
+        possible_moves: &Vec<(usize, usize)>,
+        parent_key: &str
+    ) {
+        let mut neurons = self.neurons.lock().unwrap();
+        for (row, col) in possible_moves {
+            let mut board = board.clone();
+            make_move(&mut board, *row, *col);
+            let key = position_to_key(&board);
+            if neurons.get(&key).is_none() {
+                neurons.insert(key.clone(), Arc::new(Mutex::new(Neuron::manifest(Some(parent_key.to_string())))));
+            }
+
+            let parent = neurons.get_mut(parent_key).unwrap();
+            parent.lock().unwrap().children_neurons.push(key);
+        }
     }
 }
 
@@ -89,10 +109,7 @@ impl Neuron {
         if self.visit_count == 0 {
             return INFINITY
         }
-        // get locks before computation for efficiency
-        // let (win_count, visit_count, parent_visit_count) = {
-        //     let neauron = sel
-        // };
+
         // UCT(i) = Q(i) + c * sqrt(ln(N(p)) / N(i))
         let exploitation_factor = self.win_count as f64 / self.win_count as f64;
         let parent_visit_count = match &self.parent_neuron {

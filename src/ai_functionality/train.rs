@@ -1,6 +1,6 @@
 use std::thread;
 
-use super::{Brain, Neuron, practise::practise, backpropagate::backpropagate};
+use super::{Brain, Neuron, practise::practise};
 
 
 pub fn train(brain: Brain) -> Brain {
@@ -13,7 +13,7 @@ pub fn train(brain: Brain) -> Brain {
             for _simulation in 0..simulation_attempts {
                 let (_, neuron_key) = Neuron::get_most_excited(&brain_clone); // Use a selection strategy to choose a node to explore
                 let outcome = practise(&mut brain_clone, &neuron_key); // Simulate a random game from the selected node's state
-                backpropagate(&mut brain_clone, outcome); // Update node statistics based on the simulation result
+                brain_clone.backpropagate(outcome); // Update node statistics based on the simulation result
                 brain_clone.neurons_used_for_crosses = vec![];
                 brain_clone.neurons_used_for_noughts = vec![];
                 // brain.exploration_constant -= 1.41 / simulation_attempts as f64;

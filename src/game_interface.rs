@@ -30,7 +30,7 @@ pub fn play_game(genius_ai: Brain) {
             break;
         }
 
-        genius_ai.choose_move(&mut board);
+        genius_ai.choose_best_move(&mut board);
         print_board(&board);
     }
 
