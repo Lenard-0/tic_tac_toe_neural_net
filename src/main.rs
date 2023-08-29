@@ -1,7 +1,7 @@
 use ai_functionality::train::train;
 
-use crate::{ai_functionality::{Brain}, game_interface::play_game};
-use std::{thread, fs::{self, File}, io::Write};
+use crate::{ai_functionality::{Brain, disk_interface::write_existing_neurons}, game_interface::play_game};
+use std::{thread, fs::{self, File}, io::{Write, self}};
 use std::time::Duration;
 
 pub mod game_functionality;
@@ -15,12 +15,21 @@ fn main() {
 
     // thread::sleep(Duration::from_secs(5));
 
-    let genius_ai = Brain::manifest();
+    let mut genius_ai = Brain::manifest();
     println!("Ok, ready to get started!");
 
     loop {
-        play_game(&genius_ai);
+        play_game(&mut genius_ai);
+        println!("Would you like to continue playing (y/n)");
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).expect("Failed to read line");
+        if input.trim() == "y".to_string() {
+            continue;
+        } else {
+            break;
+        }
     }
+    write_existing_neurons(&genius_ai);
 }
 
 #[test]

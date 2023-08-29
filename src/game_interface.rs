@@ -1,7 +1,7 @@
 use crate::{game_functionality::{Board, Symbol, manifest_board, determine_outcome, Outcome}, ai_functionality::Brain};
 use std::io;
 
-pub fn play_game(genius_ai: &Brain) {
+pub fn play_game(genius_ai: &mut Brain) {
     let mut board = manifest_board();
 
     while determine_outcome(&board) == Outcome::Unfinished {
@@ -38,15 +38,23 @@ pub fn play_game(genius_ai: &Brain) {
         Outcome::NoughtWins => println!("I won! Better luck next time."),
         Outcome::CrossWins => println!("You won! I need to practise harder next time."),
         _ => println!("It was a draw! I need to practise harder next time."),
-    }
+    };
+
+    genius_ai.backpropagate(determine_outcome(&board));
 }
 
 pub fn print_board(board: &Board) {
+    println!("");
+    println!("");
+    println!("");
     println!("  {}  |  {}  |  {}  ", &symbol_to_string(&board[0][0]), &symbol_to_string(&board[0][1]), &symbol_to_string(&board[0][2]));
     println!("-----|-----|-----");
     println!("  {}  |  {}  |  {}  ", &symbol_to_string(&board[1][0]), &symbol_to_string(&board[1][1]), &symbol_to_string(&board[1][2]));
     println!("-----|-----|-----");
     println!("  {}  |  {}  |  {}  ", &symbol_to_string(&board[2][0]), &symbol_to_string(&board[2][1]), &symbol_to_string(&board[2][2]));
+    println!("");
+    println!("");
+    println!("");
 }
 
 fn symbol_to_string(symbol: &Option<Symbol>) -> String {

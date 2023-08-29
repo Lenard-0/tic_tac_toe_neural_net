@@ -18,7 +18,7 @@ pub mod disk_interface;
 pub struct Brain {
     pub neurons: Arc<Mutex<HashMap<String, Arc<Mutex<Neuron>>>>>,
     neurons_used_for_crosses: Vec<String>,
-    neurons_used_for_noughts: Vec<String>,
+    pub neurons_used_for_noughts: Vec<String>,
     exploration_constant: f64
 }
 
@@ -28,11 +28,11 @@ impl Brain {
             neurons: Arc::new(Mutex::new(get_existing_neurons())),
             neurons_used_for_crosses: vec![],
             neurons_used_for_noughts: vec![],
-            exploration_constant: 1.41
+            exploration_constant: 3.0
         }
     }
 
-    pub fn choose_best_move(&self, board: &mut Board) {
+    pub fn choose_best_move(&mut self, board: &mut Board) {
         let possible_moves = get_possible_moves(board);
         let mut best_neuron = Neuron::activate_neuron(board.clone(), possible_moves[0], self);
         let mut best_move = possible_moves[0];
@@ -54,7 +54,8 @@ impl Brain {
             first_move = false;
         }
 
-        board[best_move.0][best_move.1] = Some(Symbol::Nought)
+        board[best_move.0][best_move.1] = Some(Symbol::Nought);
+        self.neurons_used_for_noughts.push(position_to_key(board));
     }
 }
 

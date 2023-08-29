@@ -4,7 +4,7 @@ use super::{Brain, Neuron, practise::practise, disk_interface::write_existing_ne
 
 pub fn train(brain: Brain) -> Brain {
     let mut threads: Vec<thread::JoinHandle<()>> = vec![];
-    for attempt_number in 0..=1000 {
+    for _ in 0..=2000 {
         let mut brain_clone = brain.clone();
         let thread = thread::spawn(move || {
             let simulation_attempts = 50;
