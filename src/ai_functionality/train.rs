@@ -1,15 +1,13 @@
 use std::thread;
 use std::time::Duration;
-use super::{Brain, Neuron, practise::practise};
-
+use super::{Brain, Neuron, practise::practise, disk_interface::write_existing_neurons};
 
 pub fn train(brain: Brain) -> Brain {
-
-    let mut threads = vec![];
-    for attempt_number in 0..40 {
+    let mut threads: Vec<thread::JoinHandle<()>> = vec![];
+    for attempt_number in 0..=0 {
         let mut brain_clone = brain.clone();
         let thread = thread::spawn(move || {
-            let simulation_attempts = 200;
+            let simulation_attempts = 1;
             for _simulation in 0..simulation_attempts {
                 let (_, neuron_key) = Neuron::get_most_excited(&brain_clone); // Use a selection strategy to choose a node to explore
                 // println!("neuron_key: {}", neuron_key);
@@ -28,7 +26,7 @@ pub fn train(brain: Brain) -> Brain {
         thread.join().unwrap();
     }
 
-
+    write_existing_neurons(&brain);
 
     return brain
 }

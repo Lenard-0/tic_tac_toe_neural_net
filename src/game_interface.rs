@@ -1,7 +1,7 @@
 use crate::{game_functionality::{Board, Symbol, manifest_board, determine_outcome, Outcome}, ai_functionality::Brain};
 use std::io;
 
-pub fn play_game(genius_ai: Brain) {
+pub fn play_game(genius_ai: &Brain) {
     let mut board = manifest_board();
 
     while determine_outcome(&board) == Outcome::Unfinished {

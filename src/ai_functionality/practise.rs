@@ -1,5 +1,6 @@
 
 
+use std::f64::INFINITY;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
@@ -17,7 +18,7 @@ pub fn practise(brain: &mut Brain, neuron_key: &str, attempt_number: usize) -> O
     let mut move_count = 0;
     while determine_outcome(&board) == Outcome::Unfinished {
         let mut rng = rand::thread_rng();
-        // if rng.gen_range(1..=20) == 1 {
+        // if rng.gen_range(1..=200) == 1 {
         //     print_board(&board);
         // }
 
@@ -59,16 +60,11 @@ impl Brain {
             make_move(&mut board, *row, *col);
             let key = position_to_key(&board);
             let neuron = Arc::new(Mutex::new(
-                Neuron::manifest(Some(
-                    neurons.get(parent_key).unwrap().clone()
-                ))
+                Neuron::manifest(Some(parent_key.to_string()))
             ));
             if neurons.get(&key).is_none() {
                 neurons.insert(key.clone(), neuron.clone());
             }
-
-            let parent = neurons.get_mut(parent_key).unwrap();
-            parent.lock().unwrap().children_neurons.push(neuron.clone());
         }
     }
 
@@ -90,10 +86,14 @@ impl Brain {
             make_move(&mut board_clone, *row, *col);
             let current_key = position_to_key(&board_clone);
             let current_neuron = neurons.get(&current_key).unwrap().clone();
+            let current_upper_confidence = current_neuron.lock().unwrap().upper_confidence_value(self, &neurons);
+            if current_upper_confidence == INFINITY {
+                return (*row, *col)
+            }
 
             if most_excited_neuron_key != current_key {
-                if current_neuron.lock().unwrap().upper_confidence_value(self)
-                > most_excited_neuron.lock().unwrap().upper_confidence_value(self) {
+                if current_upper_confidence
+                > most_excited_neuron.lock().unwrap().upper_confidence_value(self, &neurons) {
                     most_excited_neuron = current_neuron;
                     most_exciting_move = (*row, *col);
                 }

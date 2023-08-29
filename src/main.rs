@@ -1,5 +1,7 @@
-use crate::{ai_functionality::{Brain, train::train}, game_interface::play_game};
-use std::thread;
+use ai_functionality::train::train;
+
+use crate::{ai_functionality::{Brain}, game_interface::play_game};
+use std::{thread, fs::{self, File}, io::Write};
 use std::time::Duration;
 
 pub mod game_functionality;
@@ -13,9 +15,22 @@ fn main() {
 
     // thread::sleep(Duration::from_secs(5));
 
-    let genius_ai = train(Brain::manifest());
-    println!("{:#?}", genius_ai.neurons);
+    let genius_ai = Brain::manifest();
     println!("Ok, ready to get started!");
 
-    play_game(genius_ai);
+    loop {
+        play_game(&genius_ai);
+    }
+}
+
+#[test]
+fn train_ai() {
+    train(Brain::manifest());
+}
+
+#[test]
+fn create_first_neuron() {
+    let path = format!("src/neurons/{}.txt", "000000000");
+    let mut file = File::create(path).unwrap();
+    file.write_all(format!("000000000|0|0|0").as_bytes()).unwrap();
 }

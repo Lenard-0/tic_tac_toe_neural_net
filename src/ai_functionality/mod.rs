@@ -4,12 +4,15 @@ use std::time::Duration;
 use std::{collections::HashMap, sync::Mutex};
 use std::f64::INFINITY;
 use crate::game_functionality::{Board, get_possible_moves, make_move, Symbol};
+use self::disk_interface::get_existing_neurons;
 use self::key::position_to_key;
+use std::fs;
 
 pub mod key;
 pub mod practise;
 pub mod backpropagate;
 pub mod train;
+pub mod disk_interface;
 
 #[derive(Debug, Clone)]
 pub struct Brain {
@@ -21,10 +24,8 @@ pub struct Brain {
 
 impl Brain {
     pub fn manifest() -> Self {
-        let mut neurons = HashMap::new();
-        neurons.insert("000000000".to_string(), Arc::new(Mutex::new(Neuron::manifest(None))));
         return Brain {
-            neurons: Arc::new(Mutex::new(neurons)),
+            neurons: Arc::new(Mutex::new(get_existing_neurons())),
             neurons_used_for_crosses: vec![],
             neurons_used_for_noughts: vec![],
             exploration_constant: 1.41
@@ -39,9 +40,14 @@ impl Brain {
         for m in possible_moves {
             let current_neuron = Neuron::activate_neuron(board.clone(), m, self);
             if !first_move {
-                if current_neuron.lock().unwrap().potential()
-                > best_neuron.lock().unwrap().potential() {
-                    best_neuron = current_neuron;
+                let current_neuron_better = {
+                    let current_neuron_lock = current_neuron.lock().unwrap();
+                    let best_neuron_lock = best_neuron.lock().unwrap();
+                    current_neuron_lock.win_count as f64 / current_neuron_lock.visit_count as f64
+                    > best_neuron_lock.win_count as f64 / best_neuron_lock.visit_count as f64
+                };
+                if current_neuron_better {
+                    best_neuron = current_neuron.clone();
                     best_move = m;
                 }
             }
@@ -54,20 +60,23 @@ impl Brain {
 
 #[derive(Debug, Clone)]
 pub struct Neuron {
-    visit_count: usize,
-    win_count: usize,
-    parent_neuron: Option<Arc<Mutex<Neuron>>>,
-    children_neurons: Vec<Arc<Mutex<Neuron>>>
+    pub visit_count: usize,
+    pub win_count: usize,
+    parent_neuron: Option<String>,
+    // children_neurons: Vec<Arc<Mutex<Neuron>>>
 }
 
 impl Neuron {
-    pub fn manifest(parent_neuron: Option<Arc<Mutex<Neuron>>>) -> Self {
+    pub fn manifest(parent_neuron: Option<String>) -> Self {
         return Neuron {
             visit_count: 0,
             win_count: 0,
-            parent_neuron,
-            children_neurons: vec![]
+            parent_neuron
         }
+    }
+
+    pub fn generate(visit_count: usize, win_count: usize, parent_neuron: Option<String>) -> Neuron {
+        return Neuron { visit_count, win_count, parent_neuron }
     }
 
     pub fn get_most_excited(brain: &Brain) -> (Arc<Mutex<Self>>, String) {
@@ -81,12 +90,12 @@ impl Neuron {
                 //     println!("cn: {}", most_curious_nearon.lock().unwrap().upper_confidence_value(brain, &neurons));
                 //     thread::sleep(Duration::from_secs(2));
                 // }
-                let current_upper_confidence = neuron.lock().unwrap().upper_confidence_value(brain);
+                let current_upper_confidence = neuron.lock().unwrap().upper_confidence_value(brain, &neurons);
                 if current_upper_confidence == INFINITY {
                     return (neuron.clone(), neuron_key.to_string())
                 }
                 if current_upper_confidence
-                > most_curious_nearon.lock().unwrap().upper_confidence_value(brain) {
+                > most_curious_nearon.lock().unwrap().upper_confidence_value(brain, &neurons) {
                     most_curious_nearon = neuron.clone();
                     most_curious_nearon_key = &neuron_key;
                 }
@@ -96,19 +105,20 @@ impl Neuron {
         return (most_curious_nearon.clone(), most_curious_nearon_key.to_string())
     }
 
-    fn upper_confidence_value(&self, brain: &Brain) -> f64 {
+    fn upper_confidence_value(&self, brain: &Brain, neurons: &MutexGuard<'_, HashMap<String, Arc<Mutex<Neuron>>>>) -> f64 {
         if self.visit_count == 0 {
             return INFINITY
         }
 
         // UCT(i) = Q(i) + c * sqrt(ln(N(p)) / N(i))
-        let exploitation_factor = self.win_count as f64 / self.win_count as f64;
-        let parent_visit_count = match &self.parent_neuron {
-            Some(parent) =>  parent.lock().unwrap().visit_count as f64,
-            None => 1.0
-        };
+        let exploitation_factor = self.win_count as f64 / self.visit_count as f64;
+        // let parent_visit_count = match &self.parent_neuron {
+        //     Some(parent) =>  neurons.get(parent).unwrap().lock().unwrap().visit_count as f64,
+        //     None => 1.0
+        // };
         let exploration_factor =
-            brain.exploration_constant * (parent_visit_count.ln() / self.visit_count as f64).sqrt();
+            brain.exploration_constant * (1.0 / self.visit_count as f64).sqrt();
+            // brain.exploration_constant * (parent_visit_count.ln() / self.visit_count as f64).sqrt();
 
         return exploitation_factor + exploration_factor
     }
