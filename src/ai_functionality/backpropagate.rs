@@ -20,13 +20,17 @@ pub fn backpropagate(brain: &mut Brain, outcome: Outcome) {
 }
 
 fn improve_neurons(brain: &mut Brain, neurons_visited: Vec<String>, won_game: bool) {
+    let mut neurons = brain.neurons.lock().unwrap();
     for neuron_key in neurons_visited {
-        match brain.neurons.get_mut(&neuron_key) {
+        match neurons.get_mut(&neuron_key) {
             Some(neuron) => {
-                neuron.visit_count += 1;
-                if won_game {
-                    neuron.win_count += 1;
-                }
+                {
+                    let mut neuron = neuron.lock().unwrap();
+                    neuron.visit_count += 1;
+                    if won_game {
+                        neuron.win_count += 1;
+                    }
+                } // The lock is released here when 'neuron' goes out of scope
             },
             None =>panic!("Neuron should already exist!")
         };

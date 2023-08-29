@@ -1,3 +1,5 @@
+use std::sync::{Mutex, Arc};
+
 use rand::{seq::SliceRandom, Rng};
 
 use crate::{game_functionality::{get_possible_moves, current_turn_is_crosses, Board, make_move, determine_outcome, Outcome}, game_interface::print_board};
@@ -10,7 +12,7 @@ pub fn practise(brain: &mut Brain, neuron_key: &str) -> Outcome {
     while determine_outcome(&board) == Outcome::Unfinished {
         let mut rng = rand::thread_rng();
         // if rng.gen_range(1..=20) == 1 {
-            // print_board(&board);
+        //     print_board(&board);
         // }
 
         let possible_moves = get_possible_moves(&board);
@@ -37,15 +39,16 @@ fn add_any_new_neurons(
     possible_moves: &Vec<(usize, usize)>,
     parent_key: &str
 ) {
+    let mut neurons = brain.neurons.lock().unwrap();
     for (row, col) in possible_moves {
         let mut board = board.clone();
         make_move(&mut board, *row, *col);
         let key = position_to_key(&board);
-        if brain.neurons.get(&key).is_none() {
-            brain.neurons.insert(key.clone(), Neuron::manifest(Some(parent_key.to_string())));
+        if neurons.get(&key).is_none() {
+            neurons.insert(key.clone(), Arc::new(Mutex::new(Neuron::manifest(Some(parent_key.to_string())))));
         }
 
-        let parent = brain.neurons.get_mut(parent_key).unwrap();
-        parent.children_neurons.push(key);
+        let parent = neurons.get_mut(parent_key).unwrap();
+        parent.lock().unwrap().children_neurons.push(key);
     }
 }
