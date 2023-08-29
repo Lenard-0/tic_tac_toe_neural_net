@@ -6,7 +6,7 @@ use super::{Brain, Neuron, practise::practise};
 pub fn train(brain: Brain) -> Brain {
 
     let mut threads = vec![];
-    for _ in 0..40 {
+    for attempt_number in 0..40 {
         let mut brain_clone = brain.clone();
         let thread = thread::spawn(move || {
             let simulation_attempts = 200;
@@ -14,7 +14,7 @@ pub fn train(brain: Brain) -> Brain {
                 let (_, neuron_key) = Neuron::get_most_excited(&brain_clone); // Use a selection strategy to choose a node to explore
                 // println!("neuron_key: {}", neuron_key);
                 // thread::sleep(Duration::from_secs(2));
-                let outcome = practise(&mut brain_clone, &neuron_key); // Simulate a random game from the selected node's state
+                let outcome = practise(&mut brain_clone, &neuron_key, attempt_number); // Simulate a random game from the selected node's state
                 brain_clone.backpropagate(outcome); // Update node statistics based on the simulation result
                 brain_clone.neurons_used_for_crosses = vec![];
                 brain_clone.neurons_used_for_noughts = vec![];

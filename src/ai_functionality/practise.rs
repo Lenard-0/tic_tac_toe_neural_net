@@ -10,7 +10,7 @@ use crate::{game_functionality::{get_possible_moves, current_turn_is_crosses, ma
 
 use super::{Brain, key::{position_to_key, key_to_pos}, Neuron};
 
-pub fn practise(brain: &mut Brain, neuron_key: &str) -> Outcome {
+pub fn practise(brain: &mut Brain, neuron_key: &str, attempt_number: usize) -> Outcome {
     let mut board = key_to_pos(neuron_key);
     brain.remember_neuron_used(&board, !current_turn_is_crosses(&board));
 
@@ -25,7 +25,7 @@ pub fn practise(brain: &mut Brain, neuron_key: &str) -> Outcome {
         brain.add_any_new_neurons(&board, &possible_moves, neuron_key);
 
         let (row, col) = {
-            if move_count < 3 {
+            if move_count < 3 && attempt_number < 50 {
                 if let Some((row, col)) = possible_moves.choose(&mut rng) {
                     (*row, *col)
                 } else {
