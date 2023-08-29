@@ -1,4 +1,6 @@
 use std::sync::{Arc, MutexGuard};
+use std::thread;
+use std::time::Duration;
 use std::{collections::HashMap, sync::Mutex};
 use std::f64::INFINITY;
 use crate::game_functionality::{Board, get_possible_moves, make_move, Symbol};
@@ -11,7 +13,7 @@ pub mod train;
 
 #[derive(Debug, Clone)]
 pub struct Brain {
-    neurons: Arc<Mutex<HashMap<String, Arc<Mutex<Neuron>>>>>,
+    pub neurons: Arc<Mutex<HashMap<String, Arc<Mutex<Neuron>>>>>,
     neurons_used_for_crosses: Vec<String>,
     neurons_used_for_noughts: Vec<String>,
     exploration_constant: f64
@@ -48,26 +50,6 @@ impl Brain {
 
         board[best_move.0][best_move.1] = Some(Symbol::Nought)
     }
-
-    fn add_any_new_neurons(
-        &mut self,
-        board: &Board,
-        possible_moves: &Vec<(usize, usize)>,
-        parent_key: &str
-    ) {
-        let mut neurons = self.neurons.lock().unwrap();
-        for (row, col) in possible_moves {
-            let mut board = board.clone();
-            make_move(&mut board, *row, *col);
-            let key = position_to_key(&board);
-            if neurons.get(&key).is_none() {
-                neurons.insert(key.clone(), Arc::new(Mutex::new(Neuron::manifest(Some(parent_key.to_string())))));
-            }
-
-            let parent = neurons.get_mut(parent_key).unwrap();
-            parent.lock().unwrap().children_neurons.push(key);
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -94,7 +76,16 @@ impl Neuron {
         let mut most_curious_nearon_key = "000000000";
         for (neuron_key, neuron) in neurons.iter() {
             if neuron_key != most_curious_nearon_key {
-                if neuron.lock().unwrap().upper_confidence_value(brain, &neurons)
+                // {
+                //     println!("n: {}", neuron.lock().unwrap().upper_confidence_value(brain, &neurons));
+                //     println!("cn: {}", most_curious_nearon.lock().unwrap().upper_confidence_value(brain, &neurons));
+                //     thread::sleep(Duration::from_secs(2));
+                // }
+                let current_upper_confidence = neuron.lock().unwrap().upper_confidence_value(brain, &neurons);
+                if current_upper_confidence == INFINITY {
+                    return (neuron.clone(), neuron_key.to_string())
+                }
+                if current_upper_confidence
                 > most_curious_nearon.lock().unwrap().upper_confidence_value(brain, &neurons) {
                     most_curious_nearon = neuron.clone();
                     most_curious_nearon_key = &neuron_key;

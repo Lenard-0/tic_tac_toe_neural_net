@@ -14,7 +14,7 @@ fn main() {
     // thread::sleep(Duration::from_secs(5));
 
     let genius_ai = train(Brain::manifest());
-    println!("{:#?}", genius_ai);
+    println!("{:#?}", genius_ai.neurons);
     println!("Ok, ready to get started!");
 
     play_game(genius_ai);
