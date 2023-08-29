@@ -58,12 +58,17 @@ impl Brain {
             let mut board = board.clone();
             make_move(&mut board, *row, *col);
             let key = position_to_key(&board);
+            let neuron = Arc::new(Mutex::new(
+                Neuron::manifest(Some(
+                    neurons.get(parent_key).unwrap().clone()
+                ))
+            ));
             if neurons.get(&key).is_none() {
-                neurons.insert(key.clone(), Arc::new(Mutex::new(Neuron::manifest(Some(parent_key.to_string())))));
+                neurons.insert(key.clone(), neuron.clone());
             }
 
             let parent = neurons.get_mut(parent_key).unwrap();
-            parent.lock().unwrap().children_neurons.push(key);
+            parent.lock().unwrap().children_neurons.push(neuron.clone());
         }
     }
 
@@ -87,8 +92,8 @@ impl Brain {
             let current_neuron = neurons.get(&current_key).unwrap().clone();
 
             if most_excited_neuron_key != current_key {
-                if current_neuron.lock().unwrap().upper_confidence_value(self, &neurons)
-                > most_excited_neuron.lock().unwrap().upper_confidence_value(self, &neurons) {
+                if current_neuron.lock().unwrap().upper_confidence_value(self)
+                > most_excited_neuron.lock().unwrap().upper_confidence_value(self) {
                     most_excited_neuron = current_neuron;
                     most_exciting_move = (*row, *col);
                 }

@@ -56,12 +56,12 @@ impl Brain {
 pub struct Neuron {
     visit_count: usize,
     win_count: usize,
-    parent_neuron: Option<String>,
-    children_neurons: Vec<String>
+    parent_neuron: Option<Arc<Mutex<Neuron>>>,
+    children_neurons: Vec<Arc<Mutex<Neuron>>>
 }
 
 impl Neuron {
-    pub fn manifest(parent_neuron: Option<String>) -> Self {
+    pub fn manifest(parent_neuron: Option<Arc<Mutex<Neuron>>>) -> Self {
         return Neuron {
             visit_count: 0,
             win_count: 0,
@@ -81,12 +81,12 @@ impl Neuron {
                 //     println!("cn: {}", most_curious_nearon.lock().unwrap().upper_confidence_value(brain, &neurons));
                 //     thread::sleep(Duration::from_secs(2));
                 // }
-                let current_upper_confidence = neuron.lock().unwrap().upper_confidence_value(brain, &neurons);
+                let current_upper_confidence = neuron.lock().unwrap().upper_confidence_value(brain);
                 if current_upper_confidence == INFINITY {
                     return (neuron.clone(), neuron_key.to_string())
                 }
                 if current_upper_confidence
-                > most_curious_nearon.lock().unwrap().upper_confidence_value(brain, &neurons) {
+                > most_curious_nearon.lock().unwrap().upper_confidence_value(brain) {
                     most_curious_nearon = neuron.clone();
                     most_curious_nearon_key = &neuron_key;
                 }
@@ -96,7 +96,7 @@ impl Neuron {
         return (most_curious_nearon.clone(), most_curious_nearon_key.to_string())
     }
 
-    fn upper_confidence_value(&self, brain: &Brain, neurons: &MutexGuard<'_, HashMap<String, Arc<Mutex<Neuron>>>>) -> f64 {
+    fn upper_confidence_value(&self, brain: &Brain) -> f64 {
         if self.visit_count == 0 {
             return INFINITY
         }
@@ -104,7 +104,7 @@ impl Neuron {
         // UCT(i) = Q(i) + c * sqrt(ln(N(p)) / N(i))
         let exploitation_factor = self.win_count as f64 / self.win_count as f64;
         let parent_visit_count = match &self.parent_neuron {
-            Some(parent) =>  neurons.get(parent).unwrap().lock().unwrap().visit_count as f64,
+            Some(parent) =>  parent.lock().unwrap().visit_count as f64,
             None => 1.0
         };
         let exploration_factor =
