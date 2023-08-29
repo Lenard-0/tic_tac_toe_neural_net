@@ -28,9 +28,9 @@ fn train_ai() {
     train(Brain::manifest());
 }
 
-#[test]
-fn create_first_neuron() {
-    let path = format!("src/neurons/{}.txt", "000000000");
-    let mut file = File::create(path).unwrap();
-    file.write_all(format!("000000000|0|0|0").as_bytes()).unwrap();
-}
+// #[test]
+// fn create_first_neuron() {
+//     let path = format!("src/neurons/{}.txt", "000000000");
+//     let mut file = File::create(path).unwrap();
+//     file.write_all(format!("000000000|0|0|0").as_bytes()).unwrap();
+// }

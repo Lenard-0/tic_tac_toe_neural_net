@@ -11,7 +11,7 @@ use crate::{game_functionality::{get_possible_moves, current_turn_is_crosses, ma
 
 use super::{Brain, key::{position_to_key, key_to_pos}, Neuron};
 
-pub fn practise(brain: &mut Brain, neuron_key: &str, attempt_number: usize) -> Outcome {
+pub fn practise(brain: &mut Brain, neuron_key: &str) -> Outcome {
     let mut board = key_to_pos(neuron_key);
     brain.remember_neuron_used(&board, !current_turn_is_crosses(&board));
 
@@ -25,17 +25,7 @@ pub fn practise(brain: &mut Brain, neuron_key: &str, attempt_number: usize) -> O
         let possible_moves = get_possible_moves(&board);
         brain.add_any_new_neurons(&board, &possible_moves, neuron_key);
 
-        let (row, col) = {
-            if move_count < 3 && attempt_number < 50 {
-                if let Some((row, col)) = possible_moves.choose(&mut rng) {
-                    (*row, *col)
-                } else {
-                    panic!("No moves!")
-                }
-            } else {
-                brain.choose_most_exciting_move(&possible_moves, &board)
-            }
-        };
+        let (row, col) = brain.choose_most_exciting_move(&possible_moves, &board);
         make_move(&mut board, row, col);
         // print_board(&board);
         // thread::sleep(Duration::from_secs(2));

@@ -4,15 +4,15 @@ use super::{Brain, Neuron, practise::practise, disk_interface::write_existing_ne
 
 pub fn train(brain: Brain) -> Brain {
     let mut threads: Vec<thread::JoinHandle<()>> = vec![];
-    for attempt_number in 0..=0 {
+    for attempt_number in 0..=1000 {
         let mut brain_clone = brain.clone();
         let thread = thread::spawn(move || {
-            let simulation_attempts = 1;
+            let simulation_attempts = 50;
             for _simulation in 0..simulation_attempts {
                 let (_, neuron_key) = Neuron::get_most_excited(&brain_clone); // Use a selection strategy to choose a node to explore
                 // println!("neuron_key: {}", neuron_key);
                 // thread::sleep(Duration::from_secs(2));
-                let outcome = practise(&mut brain_clone, &neuron_key, attempt_number); // Simulate a random game from the selected node's state
+                let outcome = practise(&mut brain_clone, &neuron_key); // Simulate a random game from the selected node's state
                 brain_clone.backpropagate(outcome); // Update node statistics based on the simulation result
                 brain_clone.neurons_used_for_crosses = vec![];
                 brain_clone.neurons_used_for_noughts = vec![];

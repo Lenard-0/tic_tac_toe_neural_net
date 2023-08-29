@@ -17,7 +17,6 @@ impl Brain {
                 self.improve_neurons(&self.neurons_used_for_noughts.clone(), false);
             }
         }
-        println!("{:?}", self.neurons);
     }
 
     fn improve_neurons(&mut self, neurons_visited: &Vec<String>, won_game: bool) {
@@ -33,7 +32,7 @@ impl Brain {
                         }
                     } // The lock is released here when 'neuron' goes out of scope
                 },
-                None =>panic!("Neuron should already exist!")
+                None => panic!("Neuron should already exist!")
             };
         }
     }

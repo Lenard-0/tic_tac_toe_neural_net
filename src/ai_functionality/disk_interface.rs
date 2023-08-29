@@ -18,12 +18,11 @@ pub fn get_existing_neurons() -> HashMap<String, Arc<Mutex<Neuron>>> {
             let path = entry.path();
             let contents = match fs::read_to_string(&path) {
                 Ok(c) => c,
-                err => {
-                    println!("corrupt: {:?}", err);
+                _ => {
+                    // println!("corrupt: {:?}", err);
                     continue;
                 },
             };
-            println!("contents {}", contents);
             let mut win_count_str = "".to_string();
             let mut visit_count_str = "".to_string();
             let mut key = "".to_string();
@@ -54,7 +53,6 @@ pub fn get_existing_neurons() -> HashMap<String, Arc<Mutex<Neuron>>> {
                 win_count_str.parse().expect("Failed to parse string into number"),
                 parse_parent_key(parent_key)
             );
-            println!("{:?}", neuron);
             neurons.insert(key, Arc::new(Mutex::new(neuron)));
         }
 
@@ -73,15 +71,12 @@ pub fn write_existing_neurons(brain: &Brain) {
     let neurons = brain.neurons.lock().unwrap();
     for (key, neuron) in neurons.iter() {
         let neuron = neuron.lock().unwrap();
-        if key == "000000000" {
-            println!("{}", neuron.visit_count);
-        }
         let path = format!("src/neurons/{}.txt", key);
-        let mut file = match Path::new(&path).exists() {
-            true => File::open(path).unwrap(),
-            false => File::create(path).unwrap()
+        let mut file = File::create(path).unwrap();
+        match file.write_all(format!("{}|{}|{}|{}", key, neuron.win_count, neuron.visit_count, convert_parent_key(&neuron.parent_neuron)).as_bytes()) {
+            Ok(_) => {},
+            _ => { println!("key failed to write at: {}", key); }
         };
-        file.write_all(format!("{}|{}|{}|{}", key, neuron.win_count, neuron.visit_count, convert_parent_key(&neuron.parent_neuron)).as_bytes()).unwrap();
     }
 }
 
