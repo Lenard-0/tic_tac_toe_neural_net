@@ -73,21 +73,21 @@ impl Brain {
         let mut most_exciting_move = possible_moves[0];
         for (row, col) in possible_moves {
             let mut board_clone = board.clone();
-            make_move(&mut board_clone, *row, *col);
-            let current_key = position_to_key(&board_clone);
-            let current_neuron = neurons.get(&current_key).unwrap().clone();
-            let current_upper_confidence = current_neuron.lock().unwrap().upper_confidence_value(self, &neurons);
-            if current_upper_confidence == INFINITY {
-                return (*row, *col)
-            }
-
-            if most_excited_neuron_key != current_key {
-                if current_upper_confidence
-                > most_excited_neuron.lock().unwrap().upper_confidence_value(self, &neurons) {
-                    most_excited_neuron = current_neuron;
-                    most_exciting_move = (*row, *col);
+                make_move(&mut board_clone, *row, *col);
+                let current_key = position_to_key(&board_clone);
+                let current_neuron = neurons.get(&current_key).unwrap().clone();
+                let current_upper_confidence = current_neuron.lock().unwrap().upper_confidence_value(self, &neurons);
+                if current_upper_confidence == INFINITY {
+                    return (*row, *col)
                 }
-            }
+
+                if most_excited_neuron_key != current_key {
+                    if current_upper_confidence
+                    > most_excited_neuron.lock().unwrap().upper_confidence_value(self, &neurons) {
+                        most_excited_neuron = current_neuron;
+                        most_exciting_move = (*row, *col);
+                    }
+                }
         }
         return most_exciting_move
     }

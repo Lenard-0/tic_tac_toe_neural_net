@@ -3,9 +3,9 @@ use std::thread;
 use std::time::Duration;
 use std::{collections::HashMap, sync::Mutex};
 use std::f64::INFINITY;
-use crate::game_functionality::{Board, get_possible_moves, make_move, Symbol};
+use crate::game_functionality::{Board, get_possible_moves, make_move, Symbol, current_turn_is_crosses};
 use self::disk_interface::get_existing_neurons;
-use self::key::position_to_key;
+use self::key::{position_to_key, key_to_pos};
 use std::fs;
 
 pub mod key;
@@ -28,7 +28,7 @@ impl Brain {
             neurons: Arc::new(Mutex::new(get_existing_neurons())),
             neurons_used_for_crosses: vec![],
             neurons_used_for_noughts: vec![],
-            exploration_constant: 3.0
+            exploration_constant: 1.41
         }
     }
 
@@ -80,17 +80,17 @@ impl Neuron {
         return Neuron { visit_count, win_count, parent_neuron }
     }
 
-    pub fn get_most_excited(brain: &Brain) -> (Arc<Mutex<Self>>, String) {
+    pub fn get_most_excited(brain: &Brain, noughts_only: bool) -> (Arc<Mutex<Self>>, String) {
         let neurons = brain.neurons.lock().unwrap();
         let mut most_curious_nearon = neurons.get("000000000").unwrap().clone();
         let mut most_curious_nearon_key = "000000000";
         for (neuron_key, neuron) in neurons.iter() {
+            let board = key_to_pos(neuron_key);
+            if noughts_only && current_turn_is_crosses(&board) {
+                continue;
+            }
+
             if neuron_key != most_curious_nearon_key {
-                // {
-                //     println!("n: {}", neuron.lock().unwrap().upper_confidence_value(brain, &neurons));
-                //     println!("cn: {}", most_curious_nearon.lock().unwrap().upper_confidence_value(brain, &neurons));
-                //     thread::sleep(Duration::from_secs(2));
-                // }
                 let current_upper_confidence = neuron.lock().unwrap().upper_confidence_value(brain, &neurons);
                 if current_upper_confidence == INFINITY {
                     return (neuron.clone(), neuron_key.to_string())

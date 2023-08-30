@@ -35,6 +35,8 @@ fn main() {
 #[test]
 fn train_ai() {
     train(Brain::manifest());
+    train(Brain::manifest());
+    train(Brain::manifest());
 }
 
 // #[test]

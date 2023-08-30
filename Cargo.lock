@@ -62,7 +62,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tic_tac_toe_ai"
+name = "tic_tac_toe_neural_net"
 version = "0.1.0"
 dependencies = [
  "rand",
